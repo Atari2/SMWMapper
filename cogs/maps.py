@@ -2,6 +2,7 @@ import json
 import os
 import ast
 import aiohttp
+import asyncio
 import bbcode
 import discord
 from discord.ext import commands, tasks
@@ -461,7 +462,6 @@ class Smw(commands.Cog):
         ffmpeg_op = f'ffmpeg -i {filename} -vn -t {timestamp} -filter:a "afade=in:st=0:d=1, afade=out:st=' \
                     f'{int(seconds) - 10}:d=10" -ar 44100 -ac 2 -b:a 64k {filename.replace("spc", "mp3")} '
         async with ctx.typing():
-            import asyncio
             proc = await asyncio.create_subprocess_shell(ffmpeg_op, stdout=asyncio.subprocess.PIPE,
                                                          stderr=asyncio.subprocess.PIPE)
             await proc.communicate()

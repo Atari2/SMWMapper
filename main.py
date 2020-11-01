@@ -20,7 +20,7 @@ async def get_bot():
     _bot = await client.SMWMapper.create(prefix, credentials, *exts)
     return _bot
 
-loop = asyncio.new_event_loop()
+loop = asyncio.get_event_loop()
 bot = loop.run_until_complete(get_bot())
 logger = logging.getLogger('discord')
 logger.setLevel(logging.INFO)
