@@ -284,6 +284,12 @@ def generate_html_boilerplate(results):
     return boilerplate_code
 
 
+def get_sftp_credentials(filename):
+    with open(filename, 'rb') as f:
+        data = json.load(f)
+    return data['sftp']
+
+
 class Smw(commands.Cog):
     smwram = {}
     smwrom = {}
@@ -309,8 +315,9 @@ class Smw(commands.Cog):
         self.ftpclient = paramiko.SSHClient()
         self.ftpclient.load_system_host_keys()
         self.ftpclient.set_missing_host_key_policy(paramiko.WarningPolicy)
-        self.ftpclient.connect(self.bot.sftp_credentials.pop('ip'), self.bot.sftp_credentials.pop('port'),
-                               **self.bot.sftp_credentials)
+        self.credentials = get_sftp_credentials('config.json')
+        self.ftpclient.connect(self.credentials.pop('ip'), self.credentials.pop('port'),
+                               **self.credentials)
         self.sftp: paramiko.sftp_client.SFTPClient = self.ftpclient.open_sftp()
         self.bot.sftp = self.sftp
         self.clear_sftp_folder.start()
