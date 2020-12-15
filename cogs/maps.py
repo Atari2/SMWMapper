@@ -344,7 +344,7 @@ class Smw(commands.Cog):
         for file in self.sftp.listdir('html/map_results/'):
             try:
                 func = functools.partial(self.sftp.remove, 'html/map_results/' + file)
-                self.bot.loop.run_in_executor(None, func)
+                await self.bot.loop.run_in_executor(None, func)
             except Exception as e:
                 print(str(e))
         print('Cleared files')
