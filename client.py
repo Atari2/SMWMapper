@@ -22,7 +22,6 @@ class SMWMapper(commands.Bot):
         super().__init__(command_prefix, **options)
         self.db_pool = options.pop('db_pool')
         self.credentials = options.pop('credentials')
-        self.sftp_credentials = options.pop('sftp')
         for ext in exts:
             try:
                 self.load_extension(ext)
@@ -34,11 +33,10 @@ class SMWMapper(commands.Bot):
     @classmethod
     async def create(cls, command_prefix, credentials, *exts):
         db_creds = credentials.pop('db')
-        sftp_creds = credentials.pop('sftp')
         db_pool = await db.db_connect(db_creds)
         intents = discord.Intents.all()
         intents.presences = False
         intents.typing = False
         self = SMWMapper(command_prefix, *exts, intents=intents, db_pool=db_pool,
-                         credentials=credentials, sftp=sftp_creds)
+                         credentials=credentials)
         return self

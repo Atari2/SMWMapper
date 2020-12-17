@@ -5,8 +5,7 @@ import aiohttp
 import asyncio
 import bbcode
 import discord
-from discord.ext import commands, tasks
-import paramiko
+from discord.ext import commands
 from datetime import datetime
 import uuid
 import functools
@@ -34,7 +33,8 @@ async def check_if_spr_table(addr, ctx):
             addr = f'{v:04X}'
             break
     try:
-        await ctx.send(f'Remaps to ${spr_tables[addr]:X} (this is the *start* of the sprite table, expanded to 22 slots)')
+        await ctx.send(f'Remaps to ${spr_tables[addr]:X} '
+                       f'(this is the *start* of the sprite table, expanded to 22 slots)')
         return True
     except KeyError:
         return False
@@ -42,14 +42,6 @@ async def check_if_spr_table(addr, ctx):
 
 def setup(bot):
     bot.add_cog(Smw(bot))
-
-
-def read_file(filename):
-    if filename:
-        with open(filename, 'r', encoding="utf-8") as f:
-            datastore: dict = json.load(f)
-        f.close()
-    return datastore
 
 
 def find_field(value: str, s2=0):
@@ -228,14 +220,13 @@ async def search_result_send(ctx, query, to_search, game, type_map):
 
 
 async def send_matches(matches, ctx, game, type_map):
-    sr = "Result:\n"
     embed = discord.Embed(color=discord.Color.blue())
     embed.title = "Search result:"
     embed.description = "The following addresses were found that match your query"
     for match in matches:
         match['description'] = clean_more_description(match, game, type_map)
     if len(matches) > 3:
-        link = await upload_to_ftp(matches, ctx.bot.sftp, ctx.bot.loop)
+        link = await move_to_folder(matches)
         await ctx.send(f"Your search result has more than 3 results: {link}")
     else:
         for match in matches:
@@ -258,16 +249,12 @@ async def get_map(smw_map):
     return json_map
 
 
-async def upload_to_ftp(results, sftp: paramiko.sftp_client.SFTPClient, loop):
+async def move_to_folder(results):
     filename = f'{uuid.uuid4().hex}_{int(datetime.now().timestamp())}.html'
-    folder = 'html/map_results/'
-    full_path = folder + filename
     html_result = generate_html_boilerplate(results)
     with open(filename, 'w') as local:
         local.write(html_result)
-    func = functools.partial(sftp.put, filename, full_path, callback=None, confirm=True)
-    await loop.run_in_executor(None, func)
-    os.remove(filename)
+    os.rename(filename, '/home/pi/html/map_results/' + filename)
     return 'http://www.atarismwc.com/map_results/' + filename
 
 
@@ -282,12 +269,6 @@ def generate_html_boilerplate(results):
 
     boilerplate_code += '</tr></body></html>'
     return boilerplate_code
-
-
-def get_sftp_credentials(filename):
-    with open(filename, 'rb') as f:
-        data = json.load(f)
-    return data['sftp']
 
 
 class Smw(commands.Cog):
@@ -312,15 +293,6 @@ class Smw(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
-        self.ftpclient = paramiko.SSHClient()
-        self.ftpclient.load_system_host_keys()
-        self.ftpclient.set_missing_host_key_policy(paramiko.WarningPolicy)
-        self.credentials = get_sftp_credentials('config.json')
-        self.ftpclient.connect(self.credentials.pop('ip'), self.credentials.pop('port'),
-                               **self.credentials)
-        self.sftp: paramiko.sftp_client.SFTPClient = self.ftpclient.open_sftp()
-        self.bot.sftp = self.sftp
-        self.clear_sftp_folder.start()
     
     async def cog_check(self, ctx):
         choices = ['Are you now? Pff', 'This phrase was chosen at random', 'Yeah I mean that\'s valid I guess',
@@ -335,19 +307,6 @@ class Smw(commands.Cog):
                 await ctx.send(random.choice(choices))
                 return False
         return True
-    
-    def cog_unload(self):
-        self.clear_sftp_folder.cancel()
-    
-    @tasks.loop(hours=72)
-    async def clear_sftp_folder(self):
-        for file in self.sftp.listdir('html/map_results/'):
-            try:
-                func = functools.partial(self.sftp.remove, 'html/map_results/' + file)
-                await self.bot.loop.run_in_executor(None, func)
-            except Exception as e:
-                print(str(e))
-        print('Cleared files')
     
     @commands.command()
     async def ram(self, ctx, address: str):
@@ -501,7 +460,8 @@ class Smw(commands.Cog):
                 if 0x0000 <= int_addr <= 0x00FF:
                     return await ctx.send(f'Remaps to ${addr.replace("0", "3", 1)}')
                 elif 0x1938 <= int_addr <= 0x19B7:
-                    return await ctx.send(f'Remaps to $418A00, this is the *start* of the table, expanded to 255 entries on SA-1')
+                    return await ctx.send(f'Remaps to $418A00, this is the *start* of the table, '
+                                          f'expanded to 255 entries on SA-1')
                 elif 0x0100 <= int_addr <= 0x1FFF:
                     return await ctx.send(f'Remaps to ${(int_addr | 0x6000):X}')
                 elif 0xC800 <= int_addr <= 0xFFFF:
@@ -537,16 +497,13 @@ class Smw(commands.Cog):
                 if 0x0000 <= int_abs_addr <= 0x00FF:
                     return await ctx.send(f'Remaps to ${(int_abs_addr | 0x3000):X}')
                 elif 0x1938 <= int_abs_addr <= 0x19B7:
-                    return await ctx.send(f'Remaps to $418A00, this is the *start* of the table, expanded to 256 entries on SA-1')
+                    return await ctx.send(f'Remaps to $418A00, this is the *start* of the table, '
+                                          f'expanded to 256 entries on SA-1')
                 elif 0x0100 <= int_abs_addr <= 0x1FFF:
                     return await ctx.send(f'Remaps to ${(int_abs_addr | 0x6000):X}')
                 elif 0xC800 <= int_abs_addr <= 0xFFFF:
                     return await ctx.send(f'Remaps to $40{int_abs_addr:X}')
             await ctx.send('Not remapped')
-
-    @clear_sftp_folder.before_loop
-    async def before_clear(self):
-        await self.bot.wait_until_ready()
 
     async def load_maps(self):
         self.smwrom = json.loads((await get_map('smwrom')).decode('utf-8'))
