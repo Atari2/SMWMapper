@@ -5,7 +5,8 @@ import aiohttp
 import asyncio
 import bbcode
 import discord
-from discord.ext import commands
+from discord.ext import commands, tasks
+import glob
 from datetime import datetime
 import uuid
 import functools
@@ -307,6 +308,19 @@ class Smw(commands.Cog):
                 await ctx.send(random.choice(choices))
                 return False
         return True
+
+    @tasks.loop(hours=72)
+    async def reload_maps_loop(self):
+        await self.load_maps()
+
+    @tasks.loop(hours=72)
+    async def clear_map_results(self):
+        for result in glob.glob('/home/pi/html/map_results/*.html'):
+            try:
+                os.remove(result)
+            except Exception as e:
+                print(str(e))
+                pass
     
     @commands.command()
     async def ram(self, ctx, address: str):
@@ -504,6 +518,14 @@ class Smw(commands.Cog):
                 elif 0xC800 <= int_abs_addr <= 0xFFFF:
                     return await ctx.send(f'Remaps to $40{int_abs_addr:X}')
             await ctx.send('Not remapped')
+
+    @clear_map_results.before_loop
+    async def before_clear_loop(self):
+        await self.bot.wait_until_ready()
+
+    @reload_maps_loop.before_loop
+    async def before_load_maps_loop(self):
+        await self.bot.wait_until_ready()
 
     async def load_maps(self):
         self.smwrom = json.loads((await get_map('smwrom')).decode('utf-8'))
