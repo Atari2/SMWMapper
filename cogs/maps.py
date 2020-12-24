@@ -234,6 +234,7 @@ async def send_matches(matches, ctx, game, type_map):
         await ctx.send('Your search result has more than 3 results (I\'m sorry my website is down and until I fix'
                        ' it you\'re gonna have to download the results',
                        file=discord.File(filename, filename='results.html'))
+        os.remove(filename)
     else:
         for match in matches:
             embed.add_field(name="Address", value=match['address'], inline=False)
