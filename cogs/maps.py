@@ -12,15 +12,37 @@ import uuid
 import functools
 import googlesearch
 
-
 smwc_map_link = 'https://smwc.me/m/'
 smwc_link = 'https://www.smwcentral.net'
 getmap = 'https://www.smwcentral.net/ajax.php?a=getmap&m='
+
+pixi_spr_table = {
+    '7FAB10': 0x6040,
+    '7FAB1C': 0x6056,
+    '7FAB28': 0x6057,
+    '7FAB34': 0x606D,
+    '7FAB9E': 0x6083,
+    '7FAB40': 0x6099,
+    '7FAB4C': 0x60AF,
+    '7FAB58': 0x60C5,
+    '7FAB64': 0x60DB,
+    '7FAC00': 0x60F1,
+    '7FAC08': 0x6030,
+    '7FAC10': 0x6038
+}
 
 
 async def check_if_spr_table(addr, ctx):
     with open('spr_table.txt', 'r') as f:
         spr_tables: dict = ast.literal_eval(f.read())
+    if len(addr) == 6 and addr.startswith('7F'):
+        int_addr = int(addr, base=16)
+        for k, v in pixi_spr_table.items():
+            int_k = int(k, base=16)
+            if int_k <= int_addr <= int_k + 12:
+                await ctx.send(f'Remaps to ${v:04X} '
+                               f'(this is the *start* of the sprite table, expanded to 22 slots)')
+                return True
     if len(addr) == 6 and not addr.startswith('7E'):
         return False
     if len(addr) == 6:
@@ -30,7 +52,7 @@ async def check_if_spr_table(addr, ctx):
     int_addr = int(addr, base=16)
     int_tables = [int(key, base=16) for key in spr_tables.keys()]
     for v in int_tables:
-        if v <= int_addr < v+12:
+        if v <= int_addr < v + 12:
             addr = f'{v:04X}'
             break
     try:
@@ -265,7 +287,7 @@ def generate_html_boilerplate(results):
 <table style="width:50%"; border="1" align="left"><tr align="left">
 <th>Address</th><th>Description</th><th>Type</th><th>Size</th> """
     for r in results:
-        boilerplate_code += f'<tr class\"trow\"><td>{r["address"]}</td><td>{r["description"]}</td><td>{r["type"]}</td>'\
+        boilerplate_code += f'<tr class\"trow\"><td>{r["address"]}</td><td>{r["description"]}</td><td>{r["type"]}</td>' \
                             f'<td>{r["size"]}</td></tr>'
 
     boilerplate_code += '</tr></body></html>'
@@ -294,7 +316,7 @@ class Smw(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
-    
+
     async def cog_check(self, ctx):
         choices = ['Are you now? Pff', 'This phrase was chosen at random', 'Yeah I mean that\'s valid I guess',
                    'You wish!', 'Not as much as me', 'Please DM Atari2.0 with your command of choice']
@@ -321,7 +343,7 @@ class Smw(commands.Cog):
             except Exception as e:
                 print(str(e))
                 pass
-    
+
     @commands.command()
     async def ram(self, ctx, address: str):
         """Searches a ram address in the smw ram"""
@@ -396,7 +418,7 @@ class Smw(commands.Cog):
             return
         await self.load_maps()
         await ctx.send("Maps reloaded")
-    
+
     @commands.command()
     async def resource(self, ctx, *, query: str):
         """Searches for a resource on SMWC"""
