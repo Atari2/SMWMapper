@@ -249,14 +249,13 @@ async def send_matches(matches, ctx, game, type_map):
     for match in matches:
         match['description'] = clean_more_description(match, game, type_map)
     if len(matches) > 3:
-        # TODO: Fix this once the website works again
-        # link = await move_to_folder(matches)
-        # await ctx.send(f"Your search result has more than 3 results: {link}")
-        filename = await move_to_folder(matches)
-        await ctx.send('Your search result has more than 3 results (I\'m sorry my website is down and until I fix'
-                       ' it you\'re gonna have to download the results)',
-                       file=discord.File(filename, filename='results.html'))
-        os.remove(filename)
+        link = await move_to_folder(matches)
+        await ctx.send(f"Your search result has more than 3 results: {link}")
+        # filename = await move_to_folder(matches)
+        # await ctx.send('Your search result has more than 3 results (I\'m sorry my website is down and until I fix'
+        #                ' it you\'re gonna have to download the results)',
+        #                file=discord.File(filename, filename='results.html'))
+        # os.remove(filename)
     else:
         for match in matches:
             embed.add_field(name="Address", value=match['address'], inline=False)
@@ -278,15 +277,14 @@ async def get_map(smw_map):
     return json_map
 
 
-# TODO: Fix this shit once my website is back online
 async def move_to_folder(results):
     filename = f'{uuid.uuid4().hex}_{int(datetime.now().timestamp())}.html'
     html_result = generate_html_boilerplate(results)
     with open(filename, 'w') as local:
         local.write(html_result)
-    return filename
-    # os.rename(filename, '/home/pi/html/map_results/' + filename)
-    # return 'http://www.atarismwc.com/map_results/' + filename
+    os.rename(filename, '/home/pi/html/map_results/' + filename)
+    return 'http://www.atarismwc.com/map_results/' + filename
+    # return filename
 
 
 def generate_html_boilerplate(results):
