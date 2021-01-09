@@ -10,8 +10,11 @@ class MarkovTokens:
     final_tokens = ['.', '!', '?']
     starting_tokens = []
     tok_keys = []
+    banned_words = []
 
     def __init__(self, filename):
+        with open('banned_words.txt', 'r') as f:
+            self.banned_words = [line.strip() for line in f.readlines()]
         with open(filename, 'r', encoding='utf-8') as f:
             lines = f.readlines()
         gen_lines = filter(lambda x:
@@ -32,6 +35,8 @@ class MarkovTokens:
             if line_tokens:
                 self.starting_tokens.append(line_tokens[0])
             for i, tok in enumerate(line_tokens):
+                if tok in self.banned_words:
+                    continue
                 if tok not in self.tokens:
                     self.tokens[tok] = []
                 else:
