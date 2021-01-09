@@ -57,9 +57,9 @@ class MarkovTokens:
         return phrase
 
     async def get_phrase(self) -> str:
-        new_phrase = await self.get_phrase()
+        new_phrase = await self.get_partial_phrase()
         while new_phrase.endswith('?'):
-            new_phrase += '\n' + await self.get_phrase()
+            new_phrase += '\n' + await self.get_partial_phrase()
             if len(new_phrase) >= 2000:
                 break
 
