@@ -82,4 +82,4 @@ class Eggs(commands.Cog, command_attrs={'hidden': True}):
         """It's magic baby"""
         async with ctx.typing():
             msg = await ctx.send('Generating...')
-            await msg.edit(content=await self.bot.markov_instance.get_phrase())
+        await msg.edit(content=await self.bot.markov_instance.get_phrase())
