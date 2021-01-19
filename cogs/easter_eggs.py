@@ -86,3 +86,10 @@ class Eggs(commands.Cog, command_attrs={'hidden': True}):
             await ctx.send('No cat was available, sorry :(')
         else:
             await ctx.send(f'https://http.cat/{err}')
+
+    @commands.command()
+    async def markov(self, ctx):
+        """It's magic baby"""
+        async with ctx.typing():
+            msg = await ctx.send('Generating...')
+        await msg.edit(content=await self.bot.markov_instance.get_phrase())
