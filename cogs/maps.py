@@ -508,7 +508,7 @@ class Smw(commands.Cog):
                     return await ctx.send(f'Remaps to ${(int_addr | 0x6000):X}')
                 elif 0xC800 <= int_addr <= 0xFFFF:
                     return await ctx.send(f'Remaps to $40{int_addr:X}')
-            await ctx.send(f'Not remapped')
+            return await ctx.send(f'Not remapped')
         elif len(addr) > 6:
             return await ctx.send('Invalid address')
         elif len(addr) % 2 == 1:
