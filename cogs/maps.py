@@ -283,7 +283,7 @@ async def move_to_folder(results):
     with open(filename, 'w') as local:
         local.write(html_result)
     os.rename(filename, '/home/pi/html/map_results/' + filename)
-    return 'http://www.atarismwc.com/map_results/' + filename
+    return 'https://www.atarismwc.com/map_results/' + filename
     # return filename
 
 
