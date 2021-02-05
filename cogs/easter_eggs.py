@@ -87,9 +87,15 @@ class Eggs(commands.Cog, command_attrs={'hidden': True}):
         else:
             await ctx.send(f'https://http.cat/{err}')
 
+    @commands.cooldown(1, 5, type=commands.BucketType.user)
     @commands.command()
     async def markov(self, ctx):
         """It's magic baby"""
         async with ctx.typing():
             msg = await ctx.send('Generating...')
         await msg.edit(content=await self.bot.markov_instance.get_phrase())
+
+    @markov.on_error
+    async def handle_err(self, ctx, err):
+        if isinstance(err, commands.CommandOnCooldown):
+            await ctx.send(f'You have to wait {err.retry_after} seconds before using this command again')

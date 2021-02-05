@@ -11,6 +11,7 @@ from datetime import datetime
 import uuid
 import functools
 import googlesearch
+import time
 
 smwc_map_link = 'https://smwc.me/m/'
 smwc_link = 'https://www.smwcentral.net'
@@ -442,8 +443,9 @@ class Smw(commands.Cog):
     @commands.command()
     async def spctomp3(self, ctx):
         """Converts an SPC to an MP3 file (or at least attempts to) and sends it, note that the file must have a
-        valid SPC header. If the SPC is long, this command can take a while to execute, mostly due to the conversion
-        and upload procedures"""
+        valid SPC header and an exact size of 64.5kb.
+        if the SPC is long, this command can take a while to execute, mostly due to the conversion and upload procedures
+        """
         if len(ctx.message.attachments) == 0:
             return await ctx.send("There was no SPC attached to this command")
         filename = ctx.message.attachments[0].filename
@@ -465,7 +467,6 @@ class Smw(commands.Cog):
         except ValueError:
             os.remove(filename)
             return await ctx.send("SPC length couldn't be read correctly from header")
-        import time
         timestamp = time.strftime('%H:%M:%S', time.gmtime(seconds))
         ffmpeg_op = f'ffmpeg -i {filename} -vn -t {timestamp} -filter:a "afade=in:st=0:d=1, afade=out:st=' \
                     f'{int(seconds) - 10}:d=10" -ar 44100 -ac 2 -b:a 64k {filename.replace("spc", "mp3")} '
