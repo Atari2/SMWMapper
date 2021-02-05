@@ -95,7 +95,7 @@ class Eggs(commands.Cog, command_attrs={'hidden': True}):
             msg = await ctx.send('Generating...')
         await msg.edit(content=await self.bot.markov_instance.get_phrase())
 
-    @markov.on_error
+    @markov.error
     async def handle_err(self, ctx, err):
         if isinstance(err, commands.CommandOnCooldown):
             await ctx.send(f'You have to wait {err.retry_after} seconds before using this command again')
