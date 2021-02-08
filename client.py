@@ -46,8 +46,11 @@ class MarkovTokens:
                         pass
         self.tok_keys = list(self.tokens.keys())
 
-    async def get_partial_phrase(self) -> str:
-        cur_tok = random.choice(self.starting_tokens)
+    async def get_partial_phrase(self, starting_input: str = None) -> str:
+        cur_tok = starting_input or random.choice(self.starting_tokens)
+        if starting_input and starting_input not in self.tokens.keys():
+            phrase = 'Invalid start, doesn\'t match any of my tokens.'
+            return phrase
         phrase = cur_tok
         end = False
         while not end:
@@ -61,8 +64,8 @@ class MarkovTokens:
                 end = True
         return phrase
 
-    async def get_phrase(self) -> str:
-        new_phrase = await self.get_partial_phrase()
+    async def get_phrase(self, starting_input: str) -> str:
+        new_phrase = await self.get_partial_phrase(starting_input)
         while new_phrase.endswith('?'):
             new_phrase += '\n' + await self.get_partial_phrase()
             if len(new_phrase) >= 2000:

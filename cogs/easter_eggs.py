@@ -3,6 +3,7 @@ from discord.ext import commands
 import discord
 from discord import utils
 
+
 def setup(bot):
     bot.add_cog(Eggs(bot))
 
@@ -89,11 +90,11 @@ class Eggs(commands.Cog, command_attrs={'hidden': True}):
 
     @commands.cooldown(1, 5, type=commands.BucketType.user)
     @commands.command()
-    async def markov(self, ctx):
+    async def markov(self, ctx, *, starting_input: str = None):
         """It's magic baby"""
         async with ctx.typing():
             msg = await ctx.send('Generating...')
-        await msg.edit(content=await self.bot.markov_instance.get_phrase())
+        await msg.edit(content=await self.bot.markov_instance.get_phrase(starting_input))
 
     @markov.error
     async def handle_err(self, ctx, err):
