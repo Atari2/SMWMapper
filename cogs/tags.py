@@ -18,10 +18,11 @@ async def create_tags_table(dbpool: asyncpg.pool):
             (
             r_id uuid DEFAULT uuid_generate_v4(),
             data timestamp NOT NULL,
-            author_id text NOT NULL,
+            author_id bigint NOT NULL,
             tag text NOT NULL,
             tag_body text NOT NULL,
-            PRIMARY KEY (r_id, tag) 
+            guild_id bigint NOT NULL,
+            PRIMARY KEY (r_id, tag, author_id) 
             );
             """)
     except Exception as e:
@@ -35,22 +36,22 @@ class Tags(commands.Cog):
 
     @commands.command(hidden=True)
     @commands.has_permissions(administrator=True)
-    async def tag_create(self, ctx, tag_name, *, tag_body):
+    async def tag_create(self, ctx, tag_name: str, *, tag_body: str):
         """Adds a tag to the database"""
         async with self.db_pool.acquire() as c:
-            res = await c.fetch('SELECT * FROM tags WHERE tag = $1', str(tag_name))
+            res = await c.fetch('SELECT * FROM tags WHERE tag = $1 and guild_id = $2', tag_name, ctx.guild.id)
             if not res:
-                await c.execute("""INSERT INTO tags (data, author_id, tag, tag_body)
-                                      VALUES ($1, $2, $3, $4)""", datetime.now(), str(ctx.author.id), tag_name,
-                                tag_body)
+                await c.execute("""INSERT INTO tags (data, author_id, tag, tag_body, guild_id)
+                                      VALUES ($1, $2, $3, $4, $5)""", datetime.now(), ctx.author.id, tag_name,
+                                tag_body, ctx.guild.id)
                 return await ctx.send("Tag {} was correctly created".format(tag_name))
             await ctx.send("Tag name was already present in the database")
 
     @commands.command(hidden=True)
-    async def tag(self, ctx, tag_name):
+    async def tag(self, ctx, *, tag_name: str):
         """Searches for a given tag"""
         async with self.db_pool.acquire() as c:
-            res = await c.fetchrow('SELECT * FROM tags WHERE tag = $1', str(tag_name))
+            res = await c.fetchrow('SELECT * FROM tags WHERE tag = $1 and guild_id = $2', tag_name, ctx.guild.id)
             if res is None:
                 await ctx.send("Tag was not found, use tag_create to create a new one")
             else:
@@ -58,13 +59,14 @@ class Tags(commands.Cog):
 
     @commands.command(hidden=True)
     @commands.has_permissions(administrator=True)
-    async def tag_usr_list(self, ctx, user_id=None):
+    async def tag_usr_list(self, ctx, user_id: discord.User = None):
         """Searches all tags created by a user (if no id was given it will automatically search with the id of the
         author of the command """
         if user_id is None:
-            user_id = ctx.author.id
+            user_id = ctx.author
         async with self.bot.db_pool.acquire() as conn:
-            res = await conn.fetch('SELECT tag FROM tags WHERE author_id = $1', str(user_id))
+            res = await conn.fetch('SELECT tag FROM tags WHERE author_id = $1 and guild_id = $2', user_id.id,
+                                   ctx.guild.id)
             if not res:
                 await ctx.send("There were no tags created by this user")
             else:
@@ -75,12 +77,12 @@ class Tags(commands.Cog):
 
     @commands.command(hidden=True)
     @commands.has_permissions(administrator=True)
-    async def tag_delete(self, ctx, tag_name):
+    async def tag_delete(self, ctx, *, tag_name: str):
         """Deletes a tag, if the tag is not present it will do nothing"""
         async with self.db_pool.acquire() as conn:
             if await self.bot.is_owner(ctx.author):
-                await conn.execute("""DELETE FROM tags WHERE tag = $1""", str(tag_name))
+                await conn.execute("""DELETE FROM tags WHERE tag = $1""", tag_name)
             else:
-                await conn.execute("""DELETE FROM tags WHERE tag = $1 AND author_id = $2""", str(tag_name),
-                                   str(ctx.author.id))
+                await conn.execute("""DELETE FROM tags WHERE tag = $1 AND author_id = $2 AND guild_id = $3""",
+                                   tag_name, ctx.author.id, ctx.guild.id)
             await ctx.send("Tag was successfully deleted")
