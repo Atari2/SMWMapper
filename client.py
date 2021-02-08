@@ -68,7 +68,7 @@ class MarkovTokens:
             if len(new_phrase) >= 2000:
                 break
 
-        return new_phrase[:2000]
+        return discord.utils.escape_mentions(new_phrase[:2000])
 
 
 async def run_on_startup(bot):
