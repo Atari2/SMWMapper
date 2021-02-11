@@ -92,9 +92,11 @@ class Eggs(commands.Cog, command_attrs={'hidden': True}):
     @commands.command()
     async def markov(self, ctx, *, starting_input: str = None):
         """It's magic baby"""
+        if starting_input:
+            starting_input = starting_input.lower()
         async with ctx.typing():
             msg = await ctx.send('Generating...')
-        await msg.edit(content=await self.bot.markov_instance.get_phrase(starting_input.lower()))
+        await msg.edit(content=await self.bot.markov_instance.get_phrase(starting_input))
 
     @markov.error
     async def handle_err(self, ctx, err):
