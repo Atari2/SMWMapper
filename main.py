@@ -43,7 +43,7 @@ async def on_resumed():
 async def on_message(message: discord.Message):
     if message.author.id not in bot.blacklisted_users:
         if message.content.startswith('SMWMapper, ') and message.content.endswith('?'):
-            await message.send('No')
+            await message.channel.send('No')
         else:
             await bot.process_commands(message)
 
