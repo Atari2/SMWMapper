@@ -3,4 +3,5 @@ discord.log
 __pycache__
 .idea
 .idea/workspace.xml
-
+banned_words.txt
+messages.csv

@@ -3,6 +3,9 @@ from discord.ext import commands
 import discord
 from discord import utils
 
+SMWC_GUILD = 161245277179609089
+SMWC_WOI_CHANNEL = 381187250265784320
+
 
 def setup(bot):
     bot.add_cog(Eggs(bot))
@@ -88,10 +91,13 @@ class Eggs(commands.Cog, command_attrs={'hidden': True}):
         else:
             await ctx.send(f'https://http.cat/{err}')
 
-    @commands.cooldown(1, 5, type=commands.BucketType.user)
+    @commands.cooldown(1, 30, type=commands.BucketType.user)
     @commands.command()
-    async def markov(self, ctx, *, starting_input: str = None):
+    async def markov(self, ctx: commands.Context, *, starting_input: str = None):
         """It's magic baby"""
+        if ctx.guild.id == SMWC_GUILD and ctx.channel.id != SMWC_WOI_CHANNEL:
+            await ctx.send(f'This command may only be used in {ctx.guild.get_channel(SMWC_WOI_CHANNEL).mention}')
+            return
         if starting_input:
             starting_input = starting_input.lower()
         async with ctx.typing():
